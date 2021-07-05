@@ -1,11 +1,32 @@
 
+FROM maven:3.6.3-jdk-11-slim AS builder
 
+COPY src /home/app/src
 
-FROM openjdk:11.0.6-slim
-ARG JAR_FILE=target/test-project-0.0.1-SNAPSHOT.jar
-COPY ${JAR_FILE} app.jar
+ADD pom.xml /home/app
+
+RUN mvn -ntp -f /home/app/pom.xml clean package -DskipTests
+
+FROM adoptopenjdk/openjdk11
+
+RUN mkdir /app
+
+COPY --from=builder /home/app/target/*.jar /app/app.jar
+
 EXPOSE 8080
-ENTRYPOINT ["java","-jar","/app.jar"]
+
+EXPOSE 8089
+
+ENV JAVA_OPTS=""
+
+ENTRYPOINT exec java $JAVA_OPTS -Djava.security.egd=file:/dev/./urandom -Dspring.profiles.active=prod -jar /app/app.jar
+
+
+#FROM openjdk:11.0.6-slim
+#ARG JAR_FILE=target/test-project-0.0.1-SNAPSHOT.jar
+#COPY ${JAR_FILE} app.jar
+#EXPOSE 8080
+#ENTRYPOINT ["java","-jar","/app.jar"]
 
 
 
