@@ -1,5 +1,4 @@
 
-
 apiVersion: v1
 kind: Service
 metadata:
@@ -13,10 +12,7 @@ spec:
       targetPort: 8080
   type: LoadBalancer
 
-
-
 ---
-
 
 apiVersion: apps/v1
 kind: Deployment
@@ -38,7 +34,7 @@ spec:
           imagePullPolicy: IfNotPresent
           env:
             - name: B_HOST
-              value: mysql
+              value: localhost
             - name: DB_PORT
               value: '3306'
             - name: MYSQL_USER
@@ -47,7 +43,82 @@ spec:
               value: root
             - name: DB_NAME
               value: test_application
+        - name: mysql
+          image: mysql:5.6
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: root
+          ports:
+            - containerPort: 3306
+              name: mysql
+          volumeMounts:
+            - name: mysql-persistent-storage
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-persistent-storage
+          persistentVolumeClaim:
+            claimName: mysql-pv-claim
       restartPolicy: Always
   selector:
     matchLabels:
       app: test-app
+
+#---
+#apiVersion: apps/v1
+#kind: Deployment
+#metadata:
+#  name: mysql
+#spec:
+#  selector:
+#    matchLabels:
+#      app: mysql
+#  strategy:
+#    type: Recreate
+#  template:
+#    metadata:
+#      labels:
+#        app: mysql
+#    spec:
+#      containers:
+#        - image: mysql:5.6
+#          name: mysql
+#          env:
+#            - name: MYSQL_ROOT_PASSWORD
+#              value: root
+#          ports:
+#            - containerPort: 3306
+#              name: mysql
+#          volumeMounts:
+#            - name: mysql-persistent-storage
+#              mountPath: /var/lib/mysql
+#      volumes:
+#        - name: mysql-persistent-storage
+#          persistentVolumeClaim:
+#            claimName: mysql-pv-claim
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-pv-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pv-claim
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
