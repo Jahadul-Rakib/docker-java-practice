@@ -34,7 +34,7 @@ spec:
     spec:
       containers:
         - name: test-app
-          image: jahadulrakib/test_project
+          image: jahadulrakib/test_project:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: B_HOST
